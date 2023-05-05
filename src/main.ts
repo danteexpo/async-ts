@@ -26,7 +26,6 @@ const loadRandom = new Promise((resolve, reject) => {
     reject('Error');
   }
 });
-
 loadRandom
   .then((random) => console.log(random))
   .catch((error) => console.error(error));
@@ -35,16 +34,12 @@ loadRandom
 const loadPokemon = async (id: number) => {
   try {
     const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-    if (res.status === 404) {
-      return 'Not Found!';
-    }
-    const data = res.json();
-    return data;
+    const data: Pokemon = await res.json();
+    return data.name;
   } catch (error) {
     console.error(error);
   }
 };
-
 console.log(await loadPokemon(4));
 
 // Understanding Promise.All
@@ -63,5 +58,51 @@ const loadPokemons = async (maxIndex: number) => {
   }
   return Promise.all(pokemonPromises);
 };
-
 console.log(await loadPokemons(5));
+
+// Understanding Async/Await in TypeScript
+type PokemonList = {
+  count: number;
+  next: string;
+  previous: null;
+  results: {
+    name: string;
+    url: string;
+  }[];
+};
+
+type Pokemon = {
+  id: number;
+  name: string;
+  stats: {
+    base_stat: number;
+    effort: number;
+    stat: {
+      name: string;
+      url: string;
+    };
+  }[];
+};
+
+const getPokemonList = async (): Promise<PokemonList> => {
+  const PokemonListResponse = await fetch('https://pokeapi.co/api/v2/pokemon');
+  return await PokemonListResponse.json();
+};
+
+const getPokemon = async (list: PokemonList, id: number): Promise<Pokemon> => {
+  const PokemonResponse = await fetch(list.results[id - 1].url);
+  return await PokemonResponse.json();
+};
+
+const pokeFunction = async () => {
+  try {
+    const list = await getPokemonList();
+    const pokemon = await getPokemon(list, 10);
+
+    console.log(pokemon.name);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+pokeFunction();
